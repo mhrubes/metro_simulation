@@ -1,5 +1,6 @@
 import React, { useState, useEffect } from 'react'
 import './App.css'
+import { Collapse, Button } from 'react-bootstrap'
 import 'bootstrap/dist/css/bootstrap.min.css' // Import Bootstrap styles
 import { ToastContainer, toast } from 'react-toastify'
 import 'react-toastify/dist/ReactToastify.css'
@@ -11,7 +12,7 @@ function App() {
     const [stations, setStations] = useState([])
     const [selectedTrain, setSelectedTrain] = useState(null)
     const [showModal, setShowModal] = useState(false)
-    const [waitingAtDepot, setWaitingAtDepot] = useState(false)
+    const [open, setOpen] = useState(false)
 
     const maxPassengersLimit = 150
     const timeFromDepo = 3
@@ -49,7 +50,7 @@ function App() {
 
     useEffect(() => {
         const initialTrains = [
-            ...Array.from({ length: 3 }, (v, i) => ({
+            ...Array.from({ length: 10 }, (v, i) => ({
                 id: i + 1,
                 name: `Vlak ${i + 1}`,
                 active: true,
@@ -73,10 +74,10 @@ function App() {
                 occupied: false,
                 trains: initialTrains.map((train) => train.name)
             },
-            ...Array.from({ length: 10 }, (v, i) => ({
+            ...Array.from({ length: 24 }, (v, i) => ({
                 name: `${stationsName[i]}`,
                 index: i + 1,
-                distance: random(3, 6),
+                distance: random(2, 5),
                 occupied: false,
                 trains: []
             }))
@@ -84,7 +85,6 @@ function App() {
         setStations(initialStations)
     }, [])
 
-    // useEffect(() => {
     //     let interval
     //     if (isRunning) {
     //         interval = setInterval(() => {
@@ -233,7 +233,7 @@ function App() {
                                 const isFirstTrainAtStation = trainsAtStation.length > 0 && trainsAtStation[0].id === train.id
                                 if (isFirstTrainAtStation) {
                                     let randomWaitTime = train.direction === 0 ? stations[train.station + 1].distance : stations[train.station - 1].distance
-                                    randomWaitTime += +random(2, 3)
+                                    randomWaitTime += random(2, 3)
 
                                     const passengersChange = random(10, 50)
                                     const passengersChangeRem = random(1, 20)
@@ -254,7 +254,10 @@ function App() {
                                     } else {
                                         // Normální případ: přičítání/odečítání pasažérů
                                         newPassengerCount = isAddingPassengers ? Math.min(train.passengers + passengersChange, maxPassengersLimit) : Math.max(0, train.passengers - passengersChangeRem)
-                                        train.totalPassengersCount += newPassengerCount
+
+                                        if (isAddingPassengers) {
+                                            train.totalPassengersCount += newPassengerCount
+                                        }
                                     }
 
                                     train.totalStationsCount++
@@ -322,7 +325,7 @@ function App() {
             )
         )
 
-        toast.success(`Stav vlaku '${train.name}' byl změněn.`)
+        train.station !== 0 ? toast.warn(`Stav vlaku '${train.name}' byl změněn.`) : toast.success(`Stav vlaku '${train.name}' byl změněn.`)
     }
 
     // Function to save status change
@@ -343,85 +346,94 @@ function App() {
         setIsRunning(!isRunning)
     }
 
+    const totalPassengers = trains.reduce((sum, train) => sum + train.totalPassengersCount, 0)
+    let totalStationsPassed = trains.reduce((sum, train) => sum + train.totalStationsCount, 0)
+
     return (
         <div className="container mt-4">
             <h1 className="text-center mb-4">Simulace metra</h1>
             <ToastContainer />
-
             {/* Button to toggle on/off */}
             <div className="mb-3 text-center">
                 <button className={`btn ${isRunning ? 'btn-success' : 'btn-danger'}`} onClick={toggleRunningState}>
                     {isRunning ? 'Zapnuto' : 'Vypnuto'}
                 </button>
             </div>
+            {/* Button to toggle on/off */}
+            <div className="mb-3 text-center">
+                <span>
+                    Celkový počet projetých stanic:
+                    <motion.span
+                        key={totalStationsPassed} // Spustí animaci při změně hodnoty
+                        initial={{ opacity: 0, y: -10 }}
+                        animate={{ opacity: 1, y: 0 }}
+                        exit={{ opacity: 0, y: 10 }}
+                        transition={{ duration: 0.5 }} // Nastavení trvání animace
+                    >
+                        <strong> {totalStationsPassed}</strong>
+                    </motion.span>
+                </span>
+
+                <br />
+                <span>
+                    Celkový počet cestujících:
+                    <motion.span
+                        key={totalPassengers} // Spustí animaci při změně hodnoty
+                        initial={{ opacity: 0, y: -10 }}
+                        animate={{ opacity: 1, y: 0 }}
+                        exit={{ opacity: 0, y: 10 }}
+                        transition={{ duration: 0.5 }} // Nastavení trvání animace
+                    >
+                        <strong> {totalPassengers}</strong>
+                    </motion.span>
+                </span>
+            </div>
 
             {/* Train table */}
             <div className="mb-5">
-                <h2 className="text-center mb-3">Seznam vlaků</h2>
-                <table className="table table-bordered table-hover">
-                    <thead className="table-light">
-                        <tr>
-                            <th>Název vlaku</th>
-                            <th>Stanice</th>
-                            <th>Celkový počet projetých stanic</th>
-                            {/* <th>Rychlost</th> */}
-                            <th>Aktuální počet cestujících</th>
-                            <th>Celkový počet cestujících</th>
-                            <th>Status</th>
-                        </tr>
-                    </thead>
-                    <tbody>
-                        {trains.map((train, index) => (
-                            <tr
-                                key={index}
-                                // onClick={() => handleTrainClick(train)} style={{ cursor: 'pointer' }}
-                            >
-                                <td>{train.name}</td>
-                                <td>{train.station === 0 ? 'Depo' : `${stationsName[train.station - 1]}`}</td>
-                                <td>
-                                    <motion.span
-                                        key={train.totalStationsCount} // Zajištění, že se animace spustí při změně
-                                        initial={{ opacity: 0, y: -20 }}
-                                        animate={{ opacity: 1, y: 0 }}
-                                        exit={{ opacity: 0, y: 20 }}
-                                        transition={{ duration: 0.5 }} // Délka animace
-                                    >
-                                        {train.totalStationsCount}
-                                    </motion.span>
-                                </td>
-                                {/* <td>{train.speed}</td> */}
-                                <td>
-                                    <motion.span
-                                        key={train.passengers} // Zajištění, že se animace spustí při změně
-                                        initial={{ opacity: 0, y: -20 }}
-                                        animate={{ opacity: 1, y: 0 }}
-                                        exit={{ opacity: 0, y: 20 }}
-                                        transition={{ duration: 0.5 }} // Délka animace
-                                    >
-                                        {train.passengers}
-                                    </motion.span>
-                                </td>
-                                <td>
-                                    <motion.span
-                                        key={train.totalPassengersCount} // Zajištění, že se animace spustí při změně
-                                        initial={{ opacity: 0, y: -20 }}
-                                        animate={{ opacity: 1, y: 0 }}
-                                        exit={{ opacity: 0, y: 20 }}
-                                        transition={{ duration: 0.5 }} // Délka animace
-                                    >
-                                        {train.totalPassengersCount}
-                                    </motion.span>
-                                </td>
-                                <td>
-                                    <span className={`badge ${train.active ? 'bg-success' : 'bg-danger'}`}>{train.active ? 'Aktivní' : 'Neaktivní'}</span>
-                                    <div className="form-check form-switch">
-                                        <input type="checkbox" className="form-check-input" id="activeStatus" checked={train.active} onChange={() => handleChangeTrain(train)} />
-                                    </div>
-                                </td>
-                            </tr>
-                        ))}
-                    </tbody>
-                </table>
+                <div className="text-center">
+                    {/* Button to toggle collapse */}
+                    <Button variant="outline-primary" onClick={() => setOpen(!open)} aria-controls="train-table-collapse" aria-expanded={open}>
+                        {open ? 'Skrýt seznam vlaků' : 'Zobrazit seznam vlaků'}
+                    </Button>
+                </div>
+
+                {/* Collapsible table */}
+                <Collapse in={open}>
+                    <div id="train-table-collapse">
+                        <h2 className="text-center mb-3 mt-2">Seznam vlaků</h2>
+
+                        <table className="table table-bordered table-hover">
+                            <thead className="table-light">
+                                <tr>
+                                    <th>Název vlaku</th>
+                                    <th>Stanice</th>
+                                    <th>Celkový počet projetých stanic</th>
+                                    <th>Aktuální počet cestujících</th>
+                                    <th>Celkový počet cestujících</th>
+                                    <th>Status</th>
+                                </tr>
+                            </thead>
+                            <tbody>
+                                {trains.map((train, index) => (
+                                    <tr key={index}>
+                                        <td>{train.name}</td>
+                                        <td>{train.station === 0 ? 'Depo' : `${stationsName[train.station - 1]}`}</td>
+                                        <td>{train.totalStationsCount}</td>
+                                        <td>{train.passengers}</td>
+                                        <td>{train.totalPassengersCount}</td>
+                                        <td>
+                                            <span className={`badge ${train.active ? 'bg-success' : 'bg-danger'}`}>{train.active ? 'Aktivní' : 'Neaktivní'}</span>
+                                            <div className="form-check form-switch">
+                                                <input type="checkbox" className="form-check-input" id="activeStatus" checked={train.active} onChange={() => handleChangeTrain(train)} />
+                                            </div>
+                                        </td>
+                                    </tr>
+                                ))}
+                            </tbody>
+                        </table>
+                    </div>
+                </Collapse>
             </div>
 
             {/* Station list */}
@@ -450,7 +462,11 @@ function App() {
                                                 {item.trains.map((trainName) => {
                                                     const train = trains.find((t) => t.name === trainName)
                                                     return train ? (
-                                                        <li key={train.id}>
+                                                        <li
+                                                            key={train.id}
+                                                            style={{
+                                                                backgroundColor: !train.active ? 'lightyellow' : 'transparent'
+                                                            }}>
                                                             {train.name} - směr <strong>{train.direction === 0 ? stations[stations.length - 1].name : stations[0].name}</strong>
                                                         </li>
                                                     ) : null
@@ -464,7 +480,6 @@ function App() {
                     </div>
                 ))}
             </div>
-
             {/* Modal for train details */}
             {showModal && (
                 <div className="modal show" tabIndex="-1" role="dialog" style={{ display: 'block' }}>
