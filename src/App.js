@@ -85,114 +85,6 @@ function App() {
         setStations(initialStations)
     }, [])
 
-    //     let interval
-    //     if (isRunning) {
-    //         interval = setInterval(() => {
-    //             setTrains((prevTrains) => {
-    //                 return prevTrains.map((train) => {
-    //                     if (!train.active) return train
-
-    //                     const currentStationIndex = train.station
-    //                     const trainsAtStation = prevTrains.filter((t) => t.station === currentStationIndex && t.active)
-
-    //                     if (train.timeToStation > 0) {
-    //                         return {
-    //                             ...train,
-    //                             timeToStation: train.timeToStation - 1
-    //                         }
-    //                     } else {
-    //                         let nextStationIndex = train.direction === 0 ? currentStationIndex + 1 : currentStationIndex - 1
-
-    //                         const nextStation = stations[nextStationIndex]
-    //                         const canMoveToNextStation =
-    //                             nextStation &&
-    //                             (nextStationIndex === 0 || // Povolit přístup do depa (index 0)
-    //                                 !nextStation.occupied ||
-    //                                 nextStation.trains.every((t) => prevTrains.find((tr) => tr.name === t).direction !== train.direction))
-
-    //                         // Zde zkontrolujte, zda je poslední stanice obsazena
-    //                         if (nextStationIndex === stations.length - 1) {
-    //                             const isLastStationOccupied = prevTrains.some((t) => t.station === nextStationIndex && t.active)
-    //                             if (isLastStationOccupied) {
-    //                                 // Pokud je poslední stanice obsazena, nedovolte vlaku přistát
-    //                                 return train // Vlak zůstává na stanici
-    //                             }
-    //                         }
-
-    //                         if (nextStationIndex >= 0 && nextStationIndex < stations.length && canMoveToNextStation) {
-    //                             const isFirstTrainAtStation = trainsAtStation.length > 0 && trainsAtStation[0].id === train.id
-    //                             if (isFirstTrainAtStation) {
-    //                                 const updatedStations = stations.map((station, i) => {
-    //                                     if (i === currentStationIndex) {
-    //                                         // Odebrat vlak z aktuální stanice
-    //                                         return {
-    //                                             ...station,
-    //                                             occupied: station.trains.length > 1,
-    //                                             trains: station.trains.filter((t) => t !== train.name) // Odebrání vlaku
-    //                                         }
-    //                                     }
-    //                                     if (i === nextStationIndex) {
-    //                                         // Přidat vlak do nové stanice
-    //                                         return {
-    //                                             ...station,
-    //                                             occupied: true,
-    //                                             trains: [...station.trains, train.name] // Přidání vlaku
-    //                                         }
-    //                                     }
-    //                                     return station
-    //                                 })
-
-    //                                 // Nastavení aktualizovaných stanic
-    //                                 setStations(updatedStations)
-
-    //                                 const randomWaitTime = Math.floor(Math.random() * 5) + 3
-    //                                 const passengersChange = Math.floor(Math.random() * 5)
-    //                                 const newPassengerCount = Math.max(0, train.passengers + passengersChange)
-
-    //                                 // Aktualizace vlaku
-    //                                 setTrains((prevTrains) =>
-    //                                     prevTrains.map((t) =>
-    //                                         t.id === train.id
-    //                                             ? {
-    //                                                   ...t,
-    //                                                   station: nextStationIndex,
-    //                                                   timeToStation: randomWaitTime,
-    //                                                   passengers: nextStationIndex === 0 && train.direction === 1 ? 0 : newPassengerCount, // Vyprázdnit pasažéry, pokud se vlak vrací do depa
-    //                                                   direction: nextStationIndex === 0 ? 0 : nextStationIndex === stations.length - 1 ? 1 : train.direction // Změna směru na 0, když dojede do depa
-    //                                               }
-    //                                             : t
-    //                                     )
-    //                                 )
-
-    //                                 // Nakonec, vrátit vlak s novou aktualizací
-    //                                 return {
-    //                                     ...train,
-    //                                     station: nextStationIndex,
-    //                                     timeToStation: randomWaitTime,
-    //                                     passengers: nextStationIndex === 0 && train.direction === 1 ? 0 : newPassengerCount,
-    //                                     direction: nextStationIndex === 0 ? 0 : nextStationIndex === stations.length - 1 ? 1 : train.direction // Změna směru na 0, když dojede do depa
-    //                                 }
-    //                             }
-
-    //                             return train // Vlak zůstává na stanici
-    //                         }
-
-    //                         return train // Vlak zůstává na stanici
-    //                     }
-    //                 })
-    //             })
-    //         }, 1000)
-    //     } else {
-    //         clearInterval(interval)
-    //     }
-
-    //     console.log(trains)
-
-    //     return () => clearInterval(interval)
-    // }, [isRunning, stations])
-
-    // Function to open modal
-
     // useEffect pro aktualizaci vlaků
     useEffect(() => {
         let interval
@@ -236,7 +128,7 @@ function App() {
                                     randomWaitTime += random(2, 3)
 
                                     const passengersChange = random(10, 50)
-                                    const passengersChangeRem = random(1, 20)
+                                    const passengersChangeRem = random(10, 30)
 
                                     // Náhodně zvolíme, zda přičíst nebo odečíst
                                     const isAddingPassengers = Math.random() < 0.5 // 50% šance na přičtení nebo odečtení
@@ -467,7 +359,7 @@ function App() {
                                                             style={{
                                                                 backgroundColor: !train.active ? 'lightyellow' : 'transparent'
                                                             }}>
-                                                            {train.name} - směr <strong>{train.direction === 0 ? stations[stations.length - 1].name : stations[0].name}</strong>
+                                                            {train.name} - směr <strong>{train.direction === 0 ? stations[stations.length - 1].name : stations[0].name}</strong> ({train.passengers})
                                                         </li>
                                                     ) : null
                                                 })}
